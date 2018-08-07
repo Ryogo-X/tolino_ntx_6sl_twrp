@@ -1,0 +1,2 @@
+on init
+    write /sys/class/graphics/fb0/rotate 1
