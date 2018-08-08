@@ -8,15 +8,17 @@ TWRP builds and is fully functional (hopefully).
 2) in cmd do "fastboot flash recovery <path_to_recovery_image>"
 
 ### How to enter recovery
-1) completely turn off device;
-2) press and hold glowlight button;
-3) turn device on (while still holding glowlight button);
+1) connect your device to pc;
+2) completely turn off device;
+3) press and hold glowlight button;
+4) turn device on (while still holding glowlight button);
 
 ### How to enter fastboot
-1) completely turn off device;
-2) press and hold glowlight button;
-3) press and hold power button;
-3) wait while device turns on while holding both buttons;
+1) connect your device to pc;
+2) completely turn off device;
+3) press and hold glowlight button;
+4) press and hold power button;
+5) wait while device turns on while holding both buttons;
 
 ### How to build TWRP
 
