@@ -37,7 +37,6 @@ TWRP builds and is fully functional (hopefully).
 6. `. build/envsetup.sh`
 7. `add_lunch_combo omni_ntx_6sl-userdebug`
 8. `lunch omni_ntx_6sl-userdebug`
-9. `breakfast ntx_6sl`
-10. `mka recoveryimage`
+9. `mka recoveryimage`
 
 if everything is successful you should find built recovery by path <twrp_repo>/out/target/product/ntx_6sl/recovery.img
