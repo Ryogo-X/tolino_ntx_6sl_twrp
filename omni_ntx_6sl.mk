@@ -1,5 +1,5 @@
-# Inherit device configuration
-$(call inherit-product, device/TOLINO/ntx_6sl/ntx_6sl.mk)
+# Inherit configuration
+$(call inherit-product, build/target/product/full.mk)
 
 # Device identifier. This must come after all inclusions
 PRODUCT_DEVICE := ntx_6sl
