@@ -5,6 +5,7 @@ TWRP builds and is fully functional (hopefully).
 ### Known working devices
 - Tolino Page
 - Tolino Shine 2 HD
+- Tolino Vision 3 HD
 - Tolino Vision 4 HD
 
 ### Test without installation
