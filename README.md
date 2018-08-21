@@ -8,6 +8,7 @@ TWRP builds and is fully functional (hopefully).
 - Tolino Vision 2 HD
 - Tolino Vision 3 HD
 - Tolino Vision 4 HD
+- Tolino Epos
 
 ### Test without installation
 1) enter fastboot;
