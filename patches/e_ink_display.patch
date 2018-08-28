@@ -1,27 +1,23 @@
-From eb19aeb72c332c06a577fca6285de7ec5f2a1d23 Mon Sep 17 00:00:00 2001
-From: Ryogo <ryogo.z@gmail.com>
-Date: Fri, 10 Nov 2017 07:19:11 -0800
-Subject: [PATCH] add support for Freescale i.MX processors integrated epd controller
-
-Change-Id: Ica4c66d2fb93f86041c98a1aec8f050fe6616f21
----
-
 diff --git a/minuitwrp/Android.mk b/minuitwrp/Android.mk
-index 054dd45..486a897 100644
+index 09bdb8d..5fb2bc9 100644
 --- a/minuitwrp/Android.mk
 +++ b/minuitwrp/Android.mk
-@@ -172,6 +172,16 @@
+@@ -176,6 +176,20 @@ ifeq ($(TW_DISABLE_TTF), true)
      $(error stopping)
  endif
  
-+ifeq ($(TW_TARGET_USES_IMX_EPDC), true)
-+  LOCAL_CFLAGS += -DIMX_EPDC
++ifeq ($(TW_IMX_EINK), true)
++  LOCAL_CFLAGS += -DIMX_EINK
 +endif
 +
-+ifneq ($(TW_SCREEN_ROTATION_IMX),)
-+  LOCAL_CFLAGS += -DIMX_SCREEN_ROTATION=$(TW_SCREEN_ROTATION_IMX)
++ifeq ($(TW_IMX_EINK_MONOCHROME), true)
++  LOCAL_CFLAGS += -DIMX_EINK_A2
++endif
++
++ifneq ($(TW_IMX_EINK_ROTATE),)
++  LOCAL_CFLAGS += -DIMX_EINK_ROTATE=$(TW_IMX_EINK_ROTATE)
 +else
-+  LOCAL_CFLAGS += -DIMX_SCREEN_ROTATION=0
++  LOCAL_CFLAGS += -DIMX_EINK_ROTATE=0
 +endif
 +
  LOCAL_CLANG := true
@@ -30,26 +26,25 @@ index 054dd45..486a897 100644
 diff --git a/minuitwrp/graphics_fbdev.cpp b/minuitwrp/graphics_fbdev.cpp
 old mode 100644
 new mode 100755
-index a1c42d0..70117e8
+index a1c42d0..6db5980
 --- a/minuitwrp/graphics_fbdev.cpp
 +++ b/minuitwrp/graphics_fbdev.cpp
 @@ -34,6 +34,10 @@
  #include "graphics.h"
  #include <pixelflinger/pixelflinger.h>
  
-+#ifdef IMX_EPDC
++#ifdef IMX_EINK
 +#include <linux/mxcfb.h>
 +#endif
 +
  static GRSurface* fbdev_init(minui_backend*);
  static GRSurface* fbdev_flip(minui_backend*);
  static void fbdev_blank(minui_backend*, bool);
-@@ -58,6 +62,52 @@
- minui_backend* open_fbdev() {
+@@ -59,6 +63,52 @@ minui_backend* open_fbdev() {
      return &my_backend;
  }
-+
-+#ifdef IMX_EPDC
+ 
++#ifdef IMX_EINK
 +static unsigned int marker_val = 1;
 +static int epdc_fd;
 +
@@ -94,22 +89,29 @@ index a1c42d0..70117e8
 +	return upd_data.waveform_mode;
 +}
 +#endif
- 
++
  static void fbdev_blank(minui_backend* backend __unused, bool blank)
  {
-@@ -111,9 +161,20 @@
+ #if defined(TW_NO_SCREEN_BLANK) && defined(TW_BRIGHTNESS_PATH) && defined(TW_MAX_BRIGHTNESS)
+@@ -111,9 +161,26 @@ static void set_displayed_framebuffer(unsigned n)
  #endif
      }
      displayed_buffer = n;
 +
-+#ifdef IMX_EPDC
-+    epdc_update(0, 0, vi.xres, vi.yres, WAVEFORM_MODE_AUTO, 1, 0);
++#ifdef IMX_EINK
++    int mode = WAVEFORM_MODE_AUTO;
++    int flags = 0;
++#ifdef IMX_EINK_A2
++    mode = WAVEFORM_MODE_A2;
++    flags = EPDC_FLAG_FORCE_MONOCHROME;
++#endif
++    epdc_update(0, 0, vi.xres, vi.yres, mode, 1, flags);
 +#endif
  }
  
  static GRSurface* fbdev_init(minui_backend* backend) {
 +
-+#ifdef IMX_EPDC
++#ifdef IMX_EINK
 +    int auto_update_mode;
 +    struct mxcfb_waveform_modes wv_modes;
 +    int scheme = UPDATE_SCHEME_QUEUE_AND_MERGE;
@@ -118,16 +120,15 @@ index a1c42d0..70117e8
      int retry = 20;
      int fd = -1;
      while (fd == -1) {
-@@ -166,6 +227,21 @@
-         close(fd);
+@@ -167,6 +234,21 @@ static GRSurface* fbdev_init(minui_backend* backend) {
          return NULL;
      }
-+
-+#ifdef IMX_EPDC
+ 
++#ifdef IMX_EINK
 +    vi.bits_per_pixel = 16;
 +    vi.grayscale = 0;
 +    vi.yoffset = 0;
-+    vi.rotate = IMX_SCREEN_ROTATION; //FB_ROTATE_UR = 0 is default
++    vi.rotate = IMX_EINK_ROTATE; //FB_ROTATE_UR = 0 is default
 +    vi.activate = FB_ACTIVATE_FORCE;
 +    epdc_fd = fd;
 +
@@ -137,15 +138,16 @@ index a1c42d0..70117e8
 +        return NULL;
 +    }
 +#endif
- 
++
      // We print this out for informational purposes only, but
      // throughout we assume that the framebuffer device uses an RGBX
-@@ -269,6 +345,31 @@
+     // pixel format.  This is the case for every development device I
+@@ -269,6 +351,31 @@ static GRSurface* fbdev_init(minui_backend* backend) {
  #if defined(RECOVERY_BGRA)
      printf("RECOVERY_BGRA\n");
  #endif
 +
-+#ifdef IMX_EPDC
++#ifdef IMX_EINK
 +    auto_update_mode = AUTO_UPDATE_MODE_REGION_MODE;
 +    if (ioctl(fd, MXCFB_SET_AUTO_UPDATE_MODE, &auto_update_mode) < 0) {
 +        perror("set auto update mode failed\n");
@@ -174,10 +176,10 @@ index a1c42d0..70117e8
  
 diff --git a/minuitwrp/include/linux/mxcfb.h b/minuitwrp/include/linux/mxcfb.h
 new file mode 100644
-index 0000000..fdb9bd6
+index 0000000..3664e51
 --- /dev/null
 +++ b/minuitwrp/include/linux/mxcfb.h
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,190 @@
 +/*
 + * Copyright (C) 2013-2014 Freescale Semiconductor, Inc. All Rights Reserved
 + */
@@ -269,6 +271,14 @@ index 0000000..fdb9bd6
 +#define UPDATE_MODE_PARTIAL			0x0
 +#define UPDATE_MODE_FULL			0x1
 +
++#define WAVEFORM_MODE_INIT			0x0	/* Screen goes to white (clears) */
++#define WAVEFORM_MODE_DU			0x1	/* Grey->white/grey->black */
++#define WAVEFORM_MODE_GC16			0x2	/* High fidelity (flashing) */
++#define WAVEFORM_MODE_GC4			0x3	/* Lower fidelity */
++#define WAVEFORM_MODE_A2			0x4	/* Fast black/white animation */
++#define WAVEFORM_MODE_GL16			0x5 	/* High fidelity (no flashing) */
++#define WAVEFORM_MODE_GLR16			0x6
++#define WAVEFORM_MODE_GLD16			0x7
 +#define WAVEFORM_MODE_AUTO			257
 +
 +#define TEMP_USE_AMBIENT			0x1000
@@ -279,8 +289,10 @@ index 0000000..fdb9bd6
 +#define EPDC_FLAG_USE_ALT_BUFFER		0x100
 +#define EPDC_FLAG_TEST_COLLISION		0x200
 +#define EPDC_FLAG_GROUP_UPDATE			0x400
++#define EPDC_FLAG_USE_AAD			0x1000
 +#define EPDC_FLAG_USE_DITHERING_Y1		0x2000
 +#define EPDC_FLAG_USE_DITHERING_Y4		0x4000
++#define EPDC_FLAG_USE_DITHERING_NTX_D8		0x100000
 +
 +#define FB_POWERDOWN_DISABLE			-1
 +
