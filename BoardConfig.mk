@@ -52,4 +52,4 @@ TW_EXCLUDE_DEFAULT_USB_INIT := true
 
 #THEME
 TW_THEME := portrait_hdpi
-TW_CUSTOM_THEME := $(if (test -d "theme"),device/TOLINO/ntx_6sl/theme,)
+TW_CUSTOM_THEME := $(if $(wildcard device/TOLINO/ntx_6sl/theme),device/TOLINO/ntx_6sl/theme)
