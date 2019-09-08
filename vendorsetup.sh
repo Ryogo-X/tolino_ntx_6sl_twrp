@@ -1,2 +1,2 @@
-add_lunch_combo omni_ntx_6sl-userdebug
+add_lunch_combo omni_tolino_generic-userdebug
 
